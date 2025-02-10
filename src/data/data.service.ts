@@ -39,7 +39,6 @@ export class DataService {
       return signal;
     });
   
-    // ارسال به save با تایپ صحیح
     return await this.dataRepository.save(signals);
   }
 

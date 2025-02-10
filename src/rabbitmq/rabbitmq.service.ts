@@ -1,45 +1,26 @@
-import { Injectable } from "@nestjs/common";
-import * as amqp from 'amqplib';
+import { Injectable } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class RabbitMQService {
-    private connection: amqp.Connection;
-    private channel: amqp.Channel;
+    constructor(
+        @Inject('RABBITMQ_SERVICE') private readonly client: ClientProxy,
+    ) {}
 
-    constructor() {
-        this.init();
-    }
-
-    async init() {
+    async sendMessage(exchange: string, routingKey: string, message: string) {
         try {
-            this.connection = await amqp.connect(process.env.RABBITMQ_URI);
-            this.channel = await this.connection.createChannel();
-        } catch (error) {
-            console.error('Error initializing RabbitMQ connection:', error);
-            throw error;
-        }
-    }
-
-    async sendMessage(queue: string, message: string) {
-        try {
-            await this.channel.assertQueue(queue, { durable: false });
-            this.channel.sendToQueue(queue, Buffer.from(message));
+            await this.client.emit(routingKey, message);
         } catch (error) {
             console.error('Error sending message to RabbitMQ:', error);
         }
     }
 
     async consumeMessage(queue: string, callback: (msg: string) => void) {
-        try {
-            await this.channel.assertQueue(queue, { durable: false });
-            this.channel.consume(queue, (msg) => {
-                if (msg) {
-                    callback(msg.content.toString());
-                    this.channel.ack(msg);
-                }
+        this.client.connect().then(() => {
+            this.client.send(queue, {}).subscribe((msg) => {
+                callback(msg as string);
             });
-        } catch (error) {
-            console.error('Error consuming message from RabbitMQ:', error);
-        }
+        });
     }
 }

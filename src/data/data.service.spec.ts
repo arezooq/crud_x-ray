@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 as uuidv4 } from 'uuid';
-import { DataService } from '../src/data/data.service';
-import { DataEntity } from '../src/data/entities/data.entity';
+import { DataService } from './data.service';
+import { DataEntity } from './entities/data.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -34,7 +34,7 @@ describe('DataService', () => {
         [1, [51.339764, 12.339223833333334, 1.2038000000000002]],
       ];
 
-      const result: (DeepPartial<DataEntity> & DataEntity) | Promise<DeepPartial<DataEntity> & DataEntity> = {
+      const result: DeepPartial<DataEntity> & DataEntity = {
         id: uuidv4(),
         time: new Date(),
         deviceId: 1,
@@ -43,11 +43,19 @@ describe('DataService', () => {
         speed: 1.2038,
       };
 
+      // Mocking the save method to return the result
       jest.spyOn(repository, 'save').mockResolvedValue(result);
 
       const actualResult = await service.createMany(inputData);
 
-      expect(actualResult).toEqual([result]);
+      // Adjusting the comparison by ensuring proper conversion of time
+      expect(actualResult.map(item => ({
+        ...item,
+        time: item.time.toISOString(), // Convert time to ISO string for accurate comparison
+      }))).toEqual([{
+        ...result,
+        time: result.time.toISOString(), // Ensure time is in ISO string format for comparison
+      }]);
     });
   });
 });

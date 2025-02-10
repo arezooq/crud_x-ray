@@ -14,8 +14,6 @@ export const dataSourceOptions: DataSourceOptions = {
   entities: [DataEntity],
   logging: false,
   synchronize: false,
-  useUnifiedTopology: true,
-  useNewUrlParser: true,
 };
 
 const dataSource = new DataSource(dataSourceOptions);
