@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RabbitMQService } from './rabbitmq.service';
 import { RabbitMQController } from './rabbitmq.controller';
-import { DataModule } from 'src/data/data.module';  // وارد کردن DataModule
+import { DataModule } from 'src/data/data.module';
 
 @Module({
   imports: [

@@ -55,7 +55,7 @@ export class RabbitMQController {
         await this.rabbitMQService.consumeMessage(queue, (msg) => {
             receiveMessage = msg;
             if (msg) {
-                this.dataService.createMany(JSON.parse(msg));  // ذخیره‌سازی داده‌ها
+                this.dataService.createMany(JSON.parse(msg));
             }
         });
         return { message: receiveMessage || 'No message received yet' };

@@ -33,7 +33,7 @@ describe('DataService', () => {
       const inputData = [
         [1, [51.339764, 12.339223833333334, 1.2038000000000002]],
       ];
-
+  
       const result: DeepPartial<DataEntity> & DataEntity = {
         id: uuidv4(),
         time: new Date(),
@@ -42,19 +42,17 @@ describe('DataService', () => {
         yCoordination: 12.339223833333334,
         speed: 1.2038,
       };
-
-      // Mocking the save method to return the result
+  
       jest.spyOn(repository, 'save').mockResolvedValue(result);
-
+  
       const actualResult = await service.createMany(inputData);
-
-      // Adjusting the comparison by ensuring proper conversion of time
+  
       expect(actualResult.map(item => ({
         ...item,
-        time: item.time.toISOString(), // Convert time to ISO string for accurate comparison
+        time: item.time.toISOString(),
       }))).toEqual([{
         ...result,
-        time: result.time.toISOString(), // Ensure time is in ISO string format for comparison
+        time: result.time.toISOString(),
       }]);
     });
   });

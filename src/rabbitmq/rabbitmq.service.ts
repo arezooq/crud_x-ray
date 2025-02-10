@@ -6,7 +6,7 @@ import { ClientProxy } from '@nestjs/microservices';
 export class RabbitMQService {
     constructor(
         @Inject('RABBITMQ_SERVICE') private readonly client: ClientProxy,
-    ) {}
+      ) {}
 
     async sendMessage(exchange: string, routingKey: string, message: string) {
         try {

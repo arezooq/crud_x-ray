@@ -10,7 +10,7 @@ describe('RabbitMQService', () => {
   beforeEach(async () => {
     mockChannel = {
       assertQueue: jest.fn().mockResolvedValue(true),
-      publish: jest.fn().mockResolvedValue(true),  // Changed to 'publish' instead of 'sendToQueue'
+      publish: jest.fn().mockResolvedValue(true),
       consume: jest.fn().mockResolvedValue(true),
       ack: jest.fn(),
     };
@@ -19,7 +19,6 @@ describe('RabbitMQService', () => {
       createChannel: jest.fn().mockResolvedValue(mockChannel),
     };
 
-    // Mocking amqp.connect to return mockConnection
     jest.spyOn(amqp, 'connect').mockResolvedValue(mockConnection as any);
 
     const module: TestingModule = await Test.createTestingModule({
@@ -41,7 +40,7 @@ describe('RabbitMQService', () => {
     await service.sendMessage(exchange, routingKey, message);
 
     expect(mockChannel.assertQueue).toHaveBeenCalledWith('queue_name', { durable: true });
-    expect(mockChannel.publish).toHaveBeenCalledWith(exchange, routingKey, Buffer.from(message));  // Adjusted to 'publish'
+    expect(mockChannel.publish).toHaveBeenCalledWith(exchange, routingKey, Buffer.from(message));
   });
 
   it('should consume a message from RabbitMQ', async () => {
@@ -49,14 +48,12 @@ describe('RabbitMQService', () => {
     const message = 'test message';
     const callback = jest.fn();
 
-    // Mocking the consume method to simulate a message being received
     mockChannel.consume.mockImplementationOnce((queue, callback) => {
       callback({ content: Buffer.from(message) });
     });
 
     await service.consumeMessage(queue, callback);
 
-    // Checking if the callback was called with the correct message
     expect(callback).toHaveBeenCalledWith(message);
     expect(mockChannel.ack).toHaveBeenCalled();
   });
