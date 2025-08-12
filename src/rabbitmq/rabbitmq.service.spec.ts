@@ -1,60 +1,58 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { RabbitMQService } from './rabbitmq.service';
-import * as amqp from 'amqplib';
+import { DataService } from '../data/data.service';
+import { RabbitMQConsumerService } from './rabbitmq.consumer.service';
+import { Test } from '@nestjs/testing';
+import { RawIotMessage } from '../common/interfaces/iot-message.interface';
 
-describe('RabbitMQService', () => {
-  let service: RabbitMQService;
-  let mockChannel: any;
-  let mockConnection: any;
+describe('handleIotData', () => {
+  let service: RabbitMQConsumerService;
+  let dataService: DataService;
 
   beforeEach(async () => {
-    mockChannel = {
-      assertQueue: jest.fn().mockResolvedValue(true),
-      publish: jest.fn().mockResolvedValue(true),
-      consume: jest.fn().mockResolvedValue(true),
-      ack: jest.fn(),
-    };
-
-    mockConnection = {
-      createChannel: jest.fn().mockResolvedValue(mockChannel),
-    };
-
-    jest.spyOn(amqp, 'connect').mockResolvedValue(mockConnection as any);
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [RabbitMQService],
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        RabbitMQConsumerService,
+        {
+          provide: 'RABBITMQ_SERVICE',
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
+        {
+          provide: DataService,
+          useValue: {
+            save: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service = module.get<RabbitMQService>(RabbitMQService);
+    service = moduleRef.get<RabbitMQConsumerService>(RabbitMQConsumerService);
+    dataService = moduleRef.get<DataService>(DataService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
+  it('should process rawData and call dataService.save with processed data', async () => {
+    const rawData: RawIotMessage = {
+      device1: {
+        data: [
+          [123, [51.5, 12.4, 2.3]],
+          [124, [51.6, 12.5, 2.5]],
+        ],
+        time: 999999,
+      },
+    };
 
-  it('should send a message to RabbitMQ', async () => {
-    const exchange = 'exchange_name';
-    const routingKey = 'routing_key';
-    const message = 'test message';
-    
-    await service.sendMessage(exchange, routingKey, message);
+    await service.handleIotData(rawData);
 
-    expect(mockChannel.assertQueue).toHaveBeenCalledWith('queue_name', { durable: true });
-    expect(mockChannel.publish).toHaveBeenCalledWith(exchange, routingKey, Buffer.from(message));
-  });
-
-  it('should consume a message from RabbitMQ', async () => {
-    const queue = 'testQueue';
-    const message = 'test message';
-    const callback = jest.fn();
-
-    mockChannel.consume.mockImplementationOnce((queue, callback) => {
-      callback({ content: Buffer.from(message) });
+    expect(dataService.save).toHaveBeenCalledTimes(1);
+    expect(dataService.save).toHaveBeenCalledWith({
+      deviceId: 'device1',
+      time: 999999,
+      dataLength: 2,
+      dataVolume: 4.8,
+      data: [
+        { time: 123, values: [51.5, 12.4, 2.3] },
+        { time: 124, values: [51.6, 12.5, 2.5] },
+      ],
     });
-
-    await service.consumeMessage(queue, callback);
-
-    expect(callback).toHaveBeenCalledWith(message);
-    expect(mockChannel.ack).toHaveBeenCalled();
   });
 });
