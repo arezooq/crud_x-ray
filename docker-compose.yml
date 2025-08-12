@@ -11,21 +11,19 @@ services:
       - RABBITMQ_CONNECTION=amqp://guest:guest@rabbitmq:5672
       - DataBase=mongo
       - mongodb_database=mng_x-ray
-      - mongodb_addr=mongodb://mongodb:27017
-      - mongodb_username=root
+      - mongodb_addr=mongodb://mongo:27017
+      - mongodb_username=
       - mongodb_password=
       - mongodb_timeout=30
       - http_port=3000
-    volumes:
-      - 
     ports:
       - "127.0.0.1:3000:3000"
-    expose:
-      - 80
     networks:
       - company_network
+
 networks:
-  arzesh_network:
+  company_network:
     name: company_network
+
 
 

@@ -1,26 +1,35 @@
-import {
-    Column,
-    Entity,
-    PrimaryGeneratedColumn,
-  } from 'typeorm';
-  
-@Entity({ name: 'data' })
-export class DataEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-  
-    @Column()
-    deviceId: number;
-  
-    @Column('float')
-    xCoordination: number;
-  
-    @Column('float')
-    yCoordination: number;
-  
-    @Column('float')
-    speed: number;
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    time: Date;
-  }
+export type IotDataDocument = IotData & Document;
+
+@Schema({ timestamps: true })
+export class DataPoint {
+  @Prop({ required: true })
+  time: number;
+
+  @Prop({ type: [Number], required: true })
+  values: number[];
+}
+
+export const DataPointSchema = SchemaFactory.createForClass(DataPoint);
+
+@Schema({ timestamps: true })
+export class IotData {
+  @Prop({ required: true })
+  deviceId: string;
+
+  @Prop({ type: [DataPointSchema], default: [] })
+  data: DataPoint[];
+
+  @Prop({ required: true })
+  dataLength: number;
+
+  @Prop({ required: true })
+  dataVolume: number;
+
+  @Prop({ required: true })
+  time: number;
+}
+
+export const IotDataSchema = SchemaFactory.createForClass(IotData);

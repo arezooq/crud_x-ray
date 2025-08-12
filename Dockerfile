@@ -1,5 +1,5 @@
 # First Stage: Build Stage
-FROM node:18 AS builder
+FROM node:22 AS builder
 
 LABEL authors="arezooq"
 
@@ -19,7 +19,7 @@ COPY . .
 RUN yarn build
 
 # Second Stage: Runtime Stage
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Set the working directory
 WORKDIR /app

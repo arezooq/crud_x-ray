@@ -1,72 +1,39 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeepPartial } from 'typeorm';
-import { DataEntity } from './entities/data.entity';
-import { v4 as uuidv4 } from 'uuid';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { IotData, IotDataDocument } from './entities/data.entity';
 
 @Injectable()
 export class DataService {
   constructor(
-    @InjectRepository(DataEntity)
-    private dataRepository: Repository<DataEntity>,
+    @InjectModel(IotData.name) private iotDataModel: Model<IotDataDocument>,
   ) {}
 
-  // get all data
-  async getAll(): Promise<DataEntity[]> {
-    return await this.dataRepository.find();
+  async getAll(): Promise<IotData[]> {
+    return this.iotDataModel.find().exec();
   }
 
-  // get one data by id
-  async getOne(id: string): Promise<DataEntity> {
-    const data = await this.dataRepository.findOneBy({ id });
-    if (!data) {
-      throw new NotFoundException('Data Not found');
-    }
+  async getOne(id: string): Promise<IotData> {
+    const data = await this.iotDataModel.findById(id).exec();
+    if (!data) throw new NotFoundException('Data not found');
     return data;
   }
 
-  // insert many data
-  async createMany(dataArray: any[]): Promise<DataEntity[]> {
-    const signals: DeepPartial<DataEntity>[] = dataArray.map(item => {
-      const signal = new DataEntity();
-      signal.id = uuidv4();
-      signal.time = new Date();
-      signal.deviceId = item[0];
-      signal.xCoordination = item[1][0];
-      signal.yCoordination = item[1][1];
-      signal.speed = item[1][2];
-  
-      return signal;
-    });
-  
-    return await this.dataRepository.save(signals);
+  async save(data: Partial<IotData>): Promise<IotData> {
+    const created = new this.iotDataModel(data);
+    return created.save();
   }
 
-  // update data by id
-  async update(id: string, data: DataEntity): Promise<DataEntity> {
-    await this.getOne(id);
-    await this.dataRepository.update(id, data);
-    return this.getOne(id);
+  async update(id: string, data: Partial<IotData>): Promise<IotData> {
+    const updated = await this.iotDataModel
+      .findByIdAndUpdate(id, data, { new: true })
+      .exec();
+    if (!updated) throw new NotFoundException('Data not found');
+    return updated;
   }
 
-  // remove data by id
   async remove(id: string): Promise<void> {
-    await this.getOne(id); //
-    await this.dataRepository.delete(id);
-  }
-
-  // filter data by time or deviceId
-  async filterByCriteria(time?: string, device?: string): Promise<DataEntity[]> {
-    const queryBuilder = this.dataRepository.createQueryBuilder('data');
-
-    if (time) {
-      queryBuilder.andWhere('data.time = :time', { time });
-    }
-
-    if (device) {
-      queryBuilder.andWhere('data.device = :device', { device });
-    }
-
-    return await queryBuilder.getMany();
+    const deleted = await this.iotDataModel.findByIdAndDelete(id).exec();
+    if (!deleted) throw new NotFoundException('Data not found');
   }
 }

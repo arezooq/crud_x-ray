@@ -1,15 +1,23 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { RabbitMQModule } from 'src/rabbitmq/rabbitmq.module';
+import { DataModule } from 'src/data/data.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { dataSourceOptions } from 'db/db.config';
-import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
-import { DataModule } from './data/data.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(dataSourceOptions), RabbitMQModule, DataModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    MongooseModule.forRoot(
+      process.env.MONGO_URI || 'mongodb://localhost:27017/mng_x-ray',
+    ),
+    RabbitMQModule,
+    DataModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-

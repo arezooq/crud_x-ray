@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { IotData, IotDataSchema } from './entities/data.entity';
 import { DataService } from './data.service';
 import { DataController } from './data.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { DataEntity } from './entities/data.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DataEntity])],
-  controllers: [DataController],
+  imports: [
+    MongooseModule.forFeature([{ name: IotData.name, schema: IotDataSchema }]),
+  ],
   providers: [DataService],
+  controllers: [DataController],
   exports: [DataService],
 })
 export class DataModule {}
